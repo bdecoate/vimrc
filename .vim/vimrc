@@ -1,0 +1,138 @@
+source ~/.vim/vundle.vim
+
+"set the leader
+let mapleader=","
+
+set t_Co=256
+set mouse=a
+set mousemodel=popup    "Right click popup. I use keys for visual mode.
+set expandtab           "expandtab, makes tabs to spaces
+set shiftwidth=4        "Places tabspots at space(mod2)
+set tabstop=4          "tabs to 4 spaces
+set softtabstop=4          "tabs to 4 spaces
+set smarttab            "Makes backspace delete leading spaces like tabs
+
+set ttymouse=xterm2
+
+set listchars=tab:→·,trail:≠,nbsp:•,precedes:…,extends:↲ "show whitespace chars
+set list                        " Enable display of whitespace chars
+
+set splitbelow          " always make bottom split active when split horizontally
+set splitright
+set backspace=indent,eol,start   " Set a backspace order what it will traverse
+								 "    and what it will skip over
+set smartindent                  " Auto replace tab with spaces
+filetype indent on
+set autoindent                   " Auto-indent in known closures
+set foldmethod=syntax   "Set the fold method to use syntax. Fine for me.
+set foldlevel=1        " Close any folds too nested, but leave top level open
+set foldcolumn=2
+set number              "Enable line numbers
+set showmode            "Show if we're in insert mode on line 1
+set showcmd             "Shows edit mode commands we've started to type
+set hidden              "Allow unsaved buffers (no prompt to save on :bn)
+set incsearch           "Turn on search as you type
+set ignorecase          "Ignore case while searching except...
+set smartcase           "except when user explicitly types caps
+
+set autoread            "autoread, if file has been changed outside vim
+syntax on               "Syntax Hilighting on
+set title               "we want to  update the window title
+set titlestring=VIM:\ %-25.55F\ %a%r%m titlelen=70  "what to make window title
+set ttyfast             "y'ariba, yariba!
+set winminheight=0      "Let us squash those windows if we wanna
+" set cul cuc             "Highlights the current cursor line
+set isfname+=32         "Let vim use spaces in filenames properly
+set sol                 "Let vim delete through line breaks
+set history=50          "Give us more command history
+set linebreak           "Only wrap long lines at word boundaries
+set undofile            "Take advantage of the scary new persistent undo
+set undodir=~/.vim/undos/
+set encoding=utf-8
+
+
+"**Filetype specific
+au BufRead,BufNewFile jquery.*.js set ft=javascript syntax=jquery
+au BufRead,BufNewFile *.jinja set filetype=htmldjango tabstop=2 sts=2 sw=2 et list
+au BufNewFile,BufRead *.ejs set filetype=html
+au BufRead,BufNewFile *.python set ts=4 sts=4 sw=4 et fdm=indent list
+au BufNewFile,BufRead *.py,*.pyx set tabstop=4 softtabstop=4 shiftwidth=4 autoindent fileformat=unix
+au BufNewFile,BufRead *.sh set filetype=sh ts=2 sw=2 sts=2 et
+au BufRead,BufNewFile *.go set filetype=go noexpandtab tabstop=4 softtabstop=4 shiftwidth=4 autoindent fileformat=unix
+" au BufNewFile,BufRead *.py,*.pyx set tabstop=4 softtabstop=4 shiftwidth=4 textwidth=79 noexpandtab
+
+au FileType css,sass,scss                   set ts=4 sts=4 sw=4 nt fdm=indent list
+au FileType python,dart,php,py              set ts=4 sts=4 sw=4 et fdm=indent list
+au FileType lua,haskell,ruby                set sw=2 fdm=indent
+au FileType html,htmldjango,xhtml,xml,yaml set ts=2 sts=2 sw=2 et fdm=indent syntax=htmldjango list | syntax on
+au FileType javascript,jquery,json               set ts=2 sts=2 sw=2 et fdm=indent syntax=json list | syntax on
+au FileType vim                             set sw=4 noet fdm=indent
+
+let python_highlight_all = 1
+
+"split navigations
+nnoremap <C-J> <C-W><C-J>
+nnoremap <C-K> <C-W><C-K>
+nnoremap <C-L> <C-W><C-L>
+nnoremap <C-H> <C-W><C-H>
+map <S-Down> <C-D>
+map <S-Up> <C-U>
+
+" When starting vim, reset position to last cursor position,
+" and restore last buffers
+set viminfo='10,\"100,:20,%,n~/.viminfo
+au BufReadPost * if line("'\"") > 0|if line("'\"") <= line("$")|exe("norm '\"")|else|exe "norm $"|endif|endif
+set laststatus=2     " Make sure the windows all get status bars, not just
+
+" Make sure python comments don't get pushed to far left
+autocmd BufRead *.py inoremap # X<c-h>#<space>
+
+" Indent Python in the Google way.
+setlocal indentexpr=GetGooglePythonIndent(v:lnum)
+function GetGooglePythonIndent(lnum)
+
+  " Indent inside parens.
+  " Align with the open paren unless it is at the end of the line.
+  " E.g.
+  "   open_paren_not_at_EOL(100,
+  "                         (200,
+  "                          300),
+  "                         400)
+  "   open_paren_at_EOL(
+  "       100, 200, 300, 400)
+  call cursor(a:lnum, 1)
+  let [par_line, par_col] = searchpairpos('(\|{\|\[', '', ')\|}\|\]', 'bW',
+        \ "line('.') < " . (a:lnum - s:maxoff) . " ? dummy :"
+        \ . " synIDattr(synID(line('.'), col('.'), 1), 'name')"
+        \ . " =~ '\\(Comment\\|String\\)$'")
+  if par_line > 0
+    call cursor(par_line, 1)
+    if par_col != col("$") - 1
+      return par_col
+    endif
+  endif
+
+  " Delegate the rest to the original function.
+  return GetPythonIndent(a:lnum)
+
+endfunction
+
+
+" let s:maxoff = 50 " maximum number of lines to look backwards.
+"
+let pyindent_nested_paren="&sw*2"
+let pyindent_open_paren="&sw*2"
+
+
+" function for toggling manual folding or indent folding
+function ToggleFold()
+	if &foldmethod == "manual"
+		:let &foldmethod="syntax"
+	elseif &foldmethod == "syntax"
+		:let &foldmethod="manual"
+	endif
+	echo &foldmethod
+endfunction
+
+" call togglefold with leader tf
+map <leader>tf :call ToggleFold()<CR>
